@@ -1,0 +1,5 @@
+package excelReader.organisation;
+
+public enum Status {
+    ENABLED, PENDING, LOCKED, UNPUBLISHED, SUSPENDED, DISABLED, DRAFT, UNSIGNED, SIGNED, EMAIL_VERIFICATION;
+}
