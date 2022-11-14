@@ -26,7 +26,7 @@ public class Organisation {
     };
 
     @Id
-    private String id;
+    private Object _id;
     private String publicId;
     private String name;
 

@@ -14,8 +14,8 @@ import java.util.*;
 public class ExcelReader {
 
     public static void main(String[] args) {
+//        create here practice and update exist practice
         OrganisationSegregate.checkByPracticeName();
-
 
 
        // Read data from excel and write into file i json format
