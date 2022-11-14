@@ -139,8 +139,17 @@ public class OrganisationSegregate {
         }
 //        step 8 create json and add user to forest city
 //        CreateJsonFileFromData.createJsonFileFromList("E:/newUserToTest.json", userToCreate);
+//        TODO Physician or admin must to end data of each physician to made it show up in practice because its no full data
+//
+//
+//        step 9 get data from db all created user in prev step.
+        List<ProviderUSer> createdUsers = GetDataFromJsonAsList.jsonDataAsObjectList("E:/createdProviderUsers.json", ProviderUSer[].class);
+        for(Physician p : dataAsDuplicate){
+            String practiceName = p.getPracticeName();
+            String City = p.getCity();
+            String ZIP = p.getZip();
 
-
+        }
 
 
 
