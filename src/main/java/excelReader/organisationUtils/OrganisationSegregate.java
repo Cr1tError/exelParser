@@ -1,6 +1,7 @@
 package excelReader.organisationUtils;
 
-import excelReader.ProviderUSer;
+import excelReader.ProviderUser;
+import excelReader.PublicId.PublicId;
 import excelReader.facility.Facility;
 import excelReader.jsonutils.CreateJsonFileFromData;
 import excelReader.jsonutils.GetDataFromJsonAsList;
@@ -10,15 +11,21 @@ import excelReader.physician.Physician;
 import excelReader.practiceNameUtils.PracticeNameChanger;
 import excelReader.toAdd.Contact;
 import excelReader.toAdd.OrganisationToAdd;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.STSourceType;
 
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class OrganisationSegregate {
 
+
     public static void checkByPracticeName(){
-        List<Organisation> organisations = GetDataFromJsonAsList.jsonDataAsObjectList("E:/organisation.json", Organisation[].class);
-        List<Physician> physicians = GetDataFromJsonAsList.jsonDataAsObjectList("E:/physician.json", Physician[].class);
+        List<Organisation> organisations = GetDataFromJsonAsList.jsonDataAsObjectList("/home/maksym/PRODSCRIPT/organisation.json", Organisation[].class);
+        List<Physician> physicians = GetDataFromJsonAsList.jsonDataAsObjectList("/home/maksym/PRODSCRIPT/physician.json", Physician[].class);
+
+
 
         // step 1 correct practice name for all physician;
         List<Physician> correctedNamePracticePhysicians = correctPracticeName(physicians);
@@ -63,18 +70,22 @@ public class OrganisationSegregate {
                 dataAsDuplicate.add(p);
             }
         }
+        //        TODO check before
+        PublicId publicIdGeneretor = new PublicId();
+        publicIdGeneretor.setCount(36611);
 
         // step 4 create new practice and store it in list(later we use it list to create Json file to add data in db)
-        List<OrganisationToAdd> dataToAddAsNewOrganisation = createOrganisationFromPhysician(dataToAddAsPracticeWithOutDuplicate);
-
+        List<OrganisationToAdd> dataToAddAsNewOrganisation = createOrganisationFromPhysician(dataToAddAsPracticeWithOutDuplicate, publicIdGeneretor);
+        int a = 0;
 
         // step 5 create file in json to add
-//        CreateJsonFileFromData.createJsonFileFromList("E:/ForestCityNewPracticeDev.json", dataToAddAsNewOrganisation);
-
+        CreateJsonFileFromData.createJsonFileFromList("/home/maksym/PRODSCRIPT/ForestCityNewPracticeDev.json", dataToAddAsNewOrganisation);
+        int a1 = 1;
         // step 6 after add data to db take all organisathion with Forest City linkeds be ready to delete exist-early data before use.
 
         // step 7 create list<Organisation> from new file from DB;
-        List<Organisation> newOrgListForestCity = GetDataFromJsonAsList.jsonDataAsObjectList("E:/CreatedOrg.json", Organisation[].class);
+        int a2 = 0;
+        List<Organisation> newOrgListForestCity = GetDataFromJsonAsList.jsonDataAsObjectList("/home/maksym/PRODSCRIPT/CreatedOrg.json", Organisation[].class);
 
         List<Facility> newLocationForEach = new ArrayList<>();
         for(Organisation o : newOrgListForestCity){
@@ -97,10 +108,11 @@ public class OrganisationSegregate {
             newLocationForEach.add(facility);
         }
 //        TODO here we create file and use it to add location to new practice.
-//        CreateJsonFileFromData.createJsonFileFromList("E:/FacilityForNewPractice.json", newLocationForEach);
+        CreateJsonFileFromData.createJsonFileFromList("/home/maksym/PRODSCRIPT/FacilityForNewPractice.json", newLocationForEach);
+        int a4= 0;
 //        Add  to db and after get json file from db and create list<Facilyty>
-        List<Facility> createdFacilityFromDB = GetDataFromJsonAsList.jsonDataAsObjectList("E:/facilityCreatedToNewLocations.json", Facility[].class);
-        List<ProviderUSer> userToCreate = new ArrayList<>();
+        List<Facility> createdFacilityFromDB = GetDataFromJsonAsList.jsonDataAsObjectList("/home/maksym/PRODSCRIPT/facilityCreatedToNewLocations.json", Facility[].class);
+        List<ProviderUser> userToCreate = new ArrayList<>();
         for(Physician p : dataToAddAsPracticeWithOutDuplicate){
             for(Organisation o : newOrgListForestCity){
                 if (o.getName().equals(p.getPracticeName())){
@@ -111,7 +123,7 @@ public class OrganisationSegregate {
                         Map<String, String> facilityIds = (Map<String, String>) f.get_id();
                         String fId = facilityIds.get("$oid");
                         if(f.getPracticeId().equals(id)){
-                            ProviderUSer providerUSer = new ProviderUSer();
+                            ProviderUser providerUSer = new ProviderUser();
                             providerUSer.setNpi(p.getNpi());
                             providerUSer.setFirstName(p.getName());
                             providerUSer.setLastName(p.getSurname());
@@ -125,10 +137,11 @@ public class OrganisationSegregate {
                             providerUSer.setPracticeId(f.getPracticeId());
                             providerUSer.setPracticeName(o.getName());
                             providerUSer.setTel(p.getTelephone());
+                            providerUSer.setSuffix(p.getSuffix());
                             providerUSer.setStatus("PENDING");
                             providerUSer.setLinkedFacilityId(new String[]{fId});
 //                            TODO here id from prod forest city
-                            providerUSer.setImagingOrgIds(new String[]{"636db81417ec830007c8ab32"});
+                            providerUSer.setImagingOrgIds(new String[]{"62e0fb0ae399f10007cde128"});
                             userToCreate.add(providerUSer);
                             break;
                         }
@@ -138,18 +151,310 @@ public class OrganisationSegregate {
             }
         }
 //        step 8 create json and add user to forest city
-//        CreateJsonFileFromData.createJsonFileFromList("E:/newUserToTest.json", userToCreate);
+        CreateJsonFileFromData.createJsonFileFromList("/home/maksym/PRODSCRIPT/newUserToForestCity.json", userToCreate);
+        int a12 = 0;
 //        TODO Physician or admin must to end data of each physician to made it show up in practice because its no full data
 //
 //
 //        step 9 get data from db all created user in prev step.
-        List<ProviderUSer> createdUsers = GetDataFromJsonAsList.jsonDataAsObjectList("E:/createdProviderUsers.json", ProviderUSer[].class);
+        List<ProviderUser> createdUsers = GetDataFromJsonAsList.jsonDataAsObjectList("/home/maksym/PRODSCRIPT/createdProviderUsers.json", ProviderUser[].class);
+
+        List<Facility> newFacilityToCreate = new ArrayList<>();
+        List<ProviderUser> newUserToCreate = new ArrayList<>();
+        List<ProviderUser> userToUpdateFromExist = new ArrayList<>();
+        Map<Integer, Facility> mapTOFutureUserCreate = new HashMap<>();
+        Map<Integer, ProviderUser> mapProviderUSer = new HashMap<>();
+        int count = 1;
         for(Physician p : dataAsDuplicate){
-            String practiceName = p.getPracticeName();
-            String City = p.getCity();
-            String ZIP = p.getZip();
+
+            ProviderUser newUser = new ProviderUser();
+            Facility newFacility = new Facility();
+
+            boolean checkUser = false;
+            boolean checkFacility = false;
+
+            for(ProviderUser user : createdUsers){
+                if(user.getNpi().equals(p.getNpi())){
+                    checkUser = true;
+                    newUser = user;
+                }
+            }
+            for(Facility facility : createdFacilityFromDB){
+                if(facility.getPracticeName().equals(p.getPracticeName())){
+                    if((facility.getAddress().getCity().equals(p.getCity())) &&(facility.getAddress().getZip().equals(p.getZip()))){
+                        checkFacility = true;
+                        newFacility = facility;
+                    }
+                }
+            }
+            if(checkUser && checkFacility){
+                String[] userFacility = newUser.getLinkedFacilityId();
+                Map<String, String> fIds = (Map<String, String>) newFacility.get_id();
+                String fId = fIds.get("$oid");
+                for(String s : userFacility){
+                    if(!(s.equals(fId))){
+                        String[] updatedUserFacility = new String[userFacility.length+1];
+                        for(int i = 0; i < updatedUserFacility.length; i++){
+                            if(i == updatedUserFacility.length - 1){
+                                updatedUserFacility[i] = fId;
+                                continue;
+                            }
+                            updatedUserFacility[i] = userFacility[i];
+                        }
+                        newUser.setLinkedFacilityId(updatedUserFacility);
+                    }
+                }
+                userToUpdateFromExist.add(newUser);
+            }
+
+            if(checkUser && !checkFacility){
+                Organisation org = new Organisation();
+                Facility facility = new Facility();
+                String pId;
+                for(Organisation o : newOrgListForestCity){
+                    if(o.getName().equals(newUser.getPracticeName())){
+                        org = o;
+                    }
+                }
+                Map<String, String> pIds = (Map<String, String>) org.get_id();
+                pId = pIds.get("$oid");
+                facility.setPracticeId(pId);
+                facility.setPracticeName(org.getName());
+                String name = org.getAddress().getAddress1() + " "+org.getAddress().getCity() +" "+ org.getAddress().getState()+ " "+ org.getAddress().getZip();
+                facility.setName(name);
+//            facility.setDescription(o.getName() + " location");
+                facility.setDescription("set description when you check info");
+                facility.setTimeZoneName("");
+                facility.setTimeZoneId("");
+                Address address = org.getAddress();
+                facility.setAddress(address);
+                facility.setTel(org.getTel());
+                facility.setFax(org.getFax());
+                facility.setStatus("PENDING");
+                newFacilityToCreate.add(facility);
+//                TODO here you have 2 maps to check witch facility linked to witch user.
+                mapTOFutureUserCreate.put(count, facility);
+                mapProviderUSer.put(count, newUser);
+                count++;
+            }
+
+
+            if(!checkUser && checkFacility){
+                ProviderUser user = new ProviderUser();
+                user.setNpi(p.getNpi());
+                user.setFirstName(p.getName());
+                user.setLastName(p.getSurname());
+                if(p.getMiddleName().trim().length() > 0){
+                    user.setMiddleName(p.getMiddleName());
+                    user.setFullName(p.getName() +" "+p.getMiddleName()+" "+p.getSurname());
+                } else{
+                    user.setFullName(p.getName() +" "+p.getSurname());
+                }
+                user.setPrimaryRoleId("203");
+                user.setPracticeId(newFacility.getPracticeId());
+                user.setPracticeName(p.getPracticeName());
+                user.setTel(p.getTelephone());
+                user.setSuffix(p.getSuffix());
+                user.setStatus("PENDING");
+                Map<String, String> fIds = (Map<String, String>) newFacility.get_id();
+                String fId = fIds.get("$oid");
+                user.setLinkedFacilityId(new String[]{fId});
+//                            TODO here id from prod forest city
+                user.setImagingOrgIds(new String[]{"62e0fb0ae399f10007cde128"});
+                newUserToCreate.add(user);
+            }
+
+            if(!checkUser && !checkFacility){
+                Organisation org = new Organisation();
+                Facility facility = new Facility();
+                String pId;
+                for(Organisation o : newOrgListForestCity){
+                    if(o.getName().equals(p.getPracticeName())){
+                        org = o;
+                    }
+                }
+                Map<String, String> pIds = (Map<String, String>) org.get_id();
+                pId = pIds.get("$oid");
+                facility.setPracticeId(pId);
+                facility.setPracticeName(org.getName());
+                String name = org.getAddress().getAddress1() + " "+org.getAddress().getCity() +" "+ org.getAddress().getState()+ " "+ org.getAddress().getZip();
+                facility.setName(name);
+//            facility.setDescription(o.getName() + " location");
+                facility.setDescription("set description when you check info");
+                facility.setTimeZoneName("");
+                facility.setTimeZoneId("");
+                Address address = org.getAddress();
+                facility.setAddress(address);
+                facility.setTel(org.getTel());
+                facility.setFax(org.getFax());
+                facility.setStatus("PENDING");
+                newFacilityToCreate.add(facility);
+                mapTOFutureUserCreate.put(count, facility);
+
+                ProviderUser user = new ProviderUser();
+                user.setNpi(p.getNpi());
+                user.setFirstName(p.getName());
+                user.setLastName(p.getSurname());
+                if(p.getMiddleName().trim().length() > 0){
+                    user.setMiddleName(p.getMiddleName());
+                    user.setFullName(p.getName() +" "+p.getMiddleName()+" "+p.getSurname());
+                } else{
+                    user.setFullName(p.getName() +" "+p.getSurname());
+                }
+                user.setPrimaryRoleId("203");
+                user.setPracticeId(facility.getPracticeId());
+                user.setPracticeName(p.getPracticeName());
+                user.setTel(p.getTelephone());
+                user.setSuffix(p.getSuffix());
+                user.setStatus("PENDING");
+//                Map<String, String> fIds = (Map<String, String>) facility.get_id();
+//                String fId = fIds.get("$oid");
+//                user.setLinkedFacilityId(new String[]{fId});
+//                            TODO here id from prod forest city
+                user.setImagingOrgIds(new String[]{"62e0fb0ae399f10007cde128"});
+//                TODO here you have 2 maps to check witch facility linked to witch user.
+                mapProviderUSer.put(count, user);
+                count++;
+            }
 
         }
+
+
+//        step 9 delete duplicate in new facility and create new maps to know witch user linked with facility
+        List<Facility> newFacilityWithOutDuplicate = new ArrayList<>();
+        Map<Integer, ProviderUser> newProviderUserMap = new HashMap<>();
+        Map<Integer, Facility> newFacilityMap = new HashMap<>();
+        int a6 = 0;
+
+       for(Integer i : mapTOFutureUserCreate.keySet()){
+           if(newFacilityWithOutDuplicate.isEmpty()){
+               newFacilityWithOutDuplicate.add(mapTOFutureUserCreate.get(i));
+               newProviderUserMap.put(i, mapProviderUSer.get(i));
+               newFacilityMap.put(i, mapTOFutureUserCreate.get(i));
+               continue;
+           }
+           boolean check = false;
+           for(Facility f : newFacilityWithOutDuplicate){
+               if((f.getPracticeName().equals(mapTOFutureUserCreate.get(i).getPracticeName())) &&
+                 ((f.getAddress().getCity().equals(mapTOFutureUserCreate.get(i).getAddress().getCity()))) &&
+                 ((f.getAddress().getZip().equals(mapTOFutureUserCreate.get(i).getAddress().getZip())))){
+                newFacilityMap.put(i, f);
+                newProviderUserMap.put(i, mapProviderUSer.get(i));
+                check = false;
+                break;
+               } else{
+                   check = true;
+               }
+           }
+           if(check){
+               newFacilityWithOutDuplicate.add(mapTOFutureUserCreate.get(i));
+               newProviderUserMap.put(i, mapProviderUSer.get(i));
+               newFacilityMap.put(i, mapTOFutureUserCreate.get(i));
+           }
+       }
+
+//       Step 10 create new facility from createdFile in DB
+       CreateJsonFileFromData.createJsonFileFromList("/home/maksym/PRODSCRIPT/newFacilityStage9.json", newFacilityWithOutDuplicate);
+        int a7 = 0;
+
+//        Step 11 get all createdFacility from DB
+        List<Facility> facilityStage11  = GetDataFromJsonAsList.jsonDataAsObjectList("/home/maksym/maksStart/JsonDAta/CreatedfacilityAfterStage10.json", Facility[].class);
+        int a8 = 0;
+//
+//       Step 12  create list of id to delete create file to update users linked imagine in DB;
+
+        List<String> idToDelete = new ArrayList<>();
+        for(ProviderUser u : userToUpdateFromExist){
+            Map<String, String> uIds= (Map<String, String>) u.get_id();
+            idToDelete.add(uIds.get("$oid"));
+        }
+        for(ProviderUser u : userToUpdateFromExist){
+            u.set_id(null);
+        }
+        writeSQLToDelete(idToDelete);
+        CreateJsonFileFromData.createJsonFileFromList("/home/maksym/PRODSCRIPT/UpdateExistingUserStage12.json", userToUpdateFromExist);
+        int a9 = 0;
+
+
+//        step 13 use script to delete users and use json to add users with new data
+
+//        step 14 add facility ID to user without facility id
+        List<ProviderUser> withFacilityLast = new ArrayList<>();
+        for(int i = 1 ;  i <= newProviderUserMap.size(); i++){
+            ProviderUser providerUser = newProviderUserMap.get(i);
+            Facility facility = newFacilityMap.get(i);
+            for(Facility f : facilityStage11){
+                if(facility.getPracticeName().equals(f.getPracticeName()) &&
+                   facility.getAddress().getAddress1().equals(f.getAddress().getAddress1())&&
+                   facility.getAddress().getZip().equals(f.getAddress().getZip())){
+                    Map<String, String> fIds = (Map<String, String>) f.get_id();
+                    String id = fIds.get("$oid");
+                    providerUser.setLinkedFacilityId(new String[]{id});
+                    withFacilityLast.add(providerUser);
+                    break;
+                }
+            }
+        }
+
+        List<ProviderUser> lastStand = new ArrayList<>();
+        List<ProviderUser> repeatAbel =new ArrayList<>();
+        for(ProviderUser u : withFacilityLast){
+            if(lastStand.isEmpty()){
+                lastStand.add(u);
+                continue;
+            }
+            boolean check = false;
+            for(ProviderUser user : lastStand){
+                if(user.getNpi().equals(u.getNpi()) &&
+                   user.getLinkedFacilityId().equals(u.getLinkedFacilityId())){
+                    check = false;
+                    break;
+                } else {
+                    check = true;
+                }
+            }
+            if(check){
+                lastStand.add(u);
+            } else{
+                repeatAbel.add(u);
+            }
+        }
+
+//        step 15 create json and add last part of physician
+//        check with current and delete duplicate TODO
+//        before do add once again chewck pls
+        CreateJsonFileFromData.createJsonFileFromList("/home/maksym/PRODSCRIPT/lastAddingStage15.json", withFacilityLast);
+        CreateJsonFileFromData.createJsonFileFromList("/home/maksym/PRODSCRIPT/reapetStage15.json", repeatAbel);
+        CreateJsonFileFromData.createJsonFileFromList("/home/maksym/PRODSCRIPT/lastStand.json", lastStand);
+        int a11 = 0;
+   //128 dont add
+
+
+
+
+
+
+
+        int a10 = 0;
+//        newOrgListForestCity mapTOFutureUserCreate mapProviderUSer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -396,7 +701,7 @@ public class OrganisationSegregate {
         return returnData;
     }
 
-    private static List<OrganisationToAdd> createOrganisationFromPhysician(List<Physician> physicians){
+    private static List<OrganisationToAdd> createOrganisationFromPhysician(List<Physician> physicians, PublicId publicId){
         ArrayList<OrganisationToAdd> dataToAddAsNewOrganisation = new ArrayList<>();
         for(Physician p : physicians){
             Address address = new Address();
@@ -409,7 +714,7 @@ public class OrganisationSegregate {
             }
             ArrayList<String> linkedImagine = new ArrayList<>();
             //  TODO here you need put current Imagine Center ID -> 62e0fb0ae399f10007cde128 -> forest city prod db
-            linkedImagine.add("636db81417ec830007c8ab32");
+            linkedImagine.add("62e0fb0ae399f10007cde128");
             List<Contact> contacts = new ArrayList<>();
             Contact contact = new Contact();
             contact.setTel(p.getTelephone());
@@ -421,9 +726,25 @@ public class OrganisationSegregate {
             data.setContacts(contacts);
             data.setType("practice");
             data.setFax(p.getFax());
+            data.setPublicId(publicId.generateOrganizationPubId());
             dataToAddAsNewOrganisation.add(data);
         }
         return dataToAddAsNewOrganisation;
+    }
+    private static void writeSQLToDelete(List<String> list){
+        list =deleteDuplicate(list);
+        try(BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream("/home/maksym/PRODSCRIPT/deleteSQL"))){
+            for(String s : list){
+                String query = "db.getCollection(\"providerUser\").deleteOne({\"_id\" : ObjectId(\""+ s + "\")});";
+                outputStream.write(query.getBytes());
+                outputStream.write("\n".getBytes());
+            }
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+    private static List<String> deleteDuplicate(List<String> data){
+      return data.stream().distinct().collect(Collectors.toList());
     }
 
 }

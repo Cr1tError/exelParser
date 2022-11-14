@@ -1,9 +1,8 @@
 package excelReader.npi;
 
-import excelReader.ProviderUSer;
+import excelReader.ProviderUser;
 import excelReader.jsonutils.GetDataFromJsonAsList;
 import excelReader.physician.Physician;
-import excelReader.toAdd.OrganisationToAdd;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,9 +15,9 @@ public class Npi {
     public static void NPIMethod(){
         List<Physician> physicians = GetDataFromJsonAsList.jsonDataAsObjectList("E:/physician.json", Physician[].class);
 //        List<OrganisationToAdd> organisationToAdds = GetDataFromJsonAsList("E:/")
-        List<ProviderUSer> providerUsers = new ArrayList<>();
+        List<ProviderUser> providerUsers = new ArrayList<>();
         for (Physician p : physicians){
-            ProviderUSer data = new ProviderUSer();
+            ProviderUser data = new ProviderUser();
             data.setNpi(p.getNpi().trim());
             data.setFirstName(p.getName().trim());
             data.setLastName(p.getSurname().trim());

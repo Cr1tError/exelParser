@@ -20,6 +20,7 @@ public class OrganisationToAdd {
     private String type;
     private String fax;
     private List<Contact> contacts;
+    private String publicId;
 
     @Override
     public boolean equals(Object o) {
