@@ -2,13 +2,11 @@ package excelReader.toAdd;
 
 import excelReader.organisation.Address;
 import excelReader.organisation.Organisation;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -23,4 +21,27 @@ public class OrganisationToAdd {
     private String fax;
     private List<Contact> contacts;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        OrganisationToAdd that = (OrganisationToAdd) o;
+        return getName().trim().equalsIgnoreCase(that.getName().trim()) && getAddress().equals(that.getAddress());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getName(), getAddress());
+    }
+
+    @Override
+    public String toString() {
+        return "OrganisationToAdd{" +
+                "name='" + name + '\'' +
+                ", linkedImagingIds=" + linkedImagingIds.toString() +
+                ", address=" + address.getAddress1() +
+                ", type='" + type + '\'' +
+                ", fax='" + fax + '\'' +
+                '}';
+    }
 }
